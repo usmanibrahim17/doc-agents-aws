@@ -159,9 +159,6 @@ ENV/
 env.bak/
 venv.bak/
 
-# Conda environments
-conda-meta/
-
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -221,3 +218,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Terraform (keep .terraform.lock.hcl committed)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+
+# Terraform backend settings contain the account-specific state bucket name
+infra/envs/demo/backend.hcl
+
+# Eval run output (per-document details); RESULTS.md is committed
+evals/results/
+
+# Build output
+dist/
+
+# Plans and local tooling
+tfplan
+.claude/
+node_modules/

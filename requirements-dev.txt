@@ -1,0 +1,4 @@
+-r requirements-lambda.txt
+pytest==9.1.1
+ruff==0.17.2
+fpdf2==2.9.0  # synthetic dataset renderer (M6)
