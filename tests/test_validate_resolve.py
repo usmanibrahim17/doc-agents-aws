@@ -72,15 +72,57 @@ def test_validator_flags_only_the_later_duplicate():
     assert validator.process(EVENT | {"doc_id": "d0"}, run, provider)["status"] == "valid"
 
 
-def test_wrong_total_is_fixed_after_rereading_confirms_it():
+def test_wrong_total_is_only_suggested_and_one_click_approval_applies_it():
     run = runtime(b"f", document(total=19))
     assert validator.process(EVENT, run, FakeProvider())["status"] == "invalid"
     reread = {"subtotal": 10, "tax": 1, "total": 19}
     outcome = resolver.process(EVENT, run, FakeProvider(reread))
-    assert outcome == {"attempts": 1, "changed": True}
+    assert outcome == {"attempts": 1, "changed": False}  # straight to a person
+    saved = run.documents.documents["d1"]
+    assert float(saved["fields"]["total"]) == 19  # money untouched
+    assert float(saved["suggestions"]["total"]["value"]) == 11
+    reviewer.process({"task_token": "t", "input": EVENT}, run)
+    assert "pre-filled" in run.reviews.items[0]["explanation"]
+
+    finalizer.process(EVENT | {"review": {"decision": "approved", "fields": {}}}, run)
+    assert float(run.documents.documents["d1"]["fields"]["total"]) == 11
+    assert run.audit.items[-1]["details"]["accepted_suggestions"] == ["total"]
+
+
+def test_reviewer_value_wins_and_rejection_changes_nothing():
+    suggested = {"total": {"value": 11, "old": 19, "reason": "r"}}
+    for review, total in (
+        ({"decision": "approved", "fields": {"total": 12}}, 12),
+        ({"decision": "rejected", "fields": {}}, 19),
+    ):
+        run = runtime(b"f", document(total=19) | {"suggestions": suggested})
+        finalizer.process(EVENT | {"review": review}, run)
+        assert float(run.documents.documents["d1"]["fields"]["total"]) == total
+
+
+def test_monetary_auto_fix_can_be_switched_on():
+    run = runtime(b"f", document(total=19))
+    validator.process(EVENT, run, FakeProvider())
+    reread = {"subtotal": 10, "tax": 1, "total": 19}
+    assert resolver.process(EVENT, run, FakeProvider(reread), auto_fix_monetary=True)["changed"]
     assert float(run.documents.documents["d1"]["fields"]["total"]) == 11
     assert validator.process(EVENT, run, FakeProvider(CLEAN))["status"] == "valid"
     assert "corrected" in codes(run.documents.documents["d1"]["issues"])
+
+
+def test_missing_non_monetary_value_found_on_second_reading_is_applied():
+    run = runtime(b"f", document(invoice_number=None))
+    validator.process(EVENT, run, FakeProvider())
+    assert resolver.process(EVENT, run, FakeProvider({"invoice_number": "TL-7"}))["changed"]
+    assert run.documents.documents["d1"]["fields"]["invoice_number"] == "TL-7"
+
+
+def test_what_counts_as_money():
+    line = {"description": "Tea", "quantity": 1, "unit_price": 2, "amount": 2}
+    assert not rules.is_monetary_change("line_items", [line], [line | {"description": "Teas"}])
+    assert rules.is_monetary_change("line_items", [line], [line | {"amount": 3}])
+    assert rules.is_monetary_change("total", None, 5)
+    assert not rules.is_monetary_change("vendor", "a", "b")
 
 
 def test_misspelled_vendor_is_fixed_without_a_model_call():

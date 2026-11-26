@@ -74,7 +74,7 @@ def main() -> int:
             page.locator(f'button[data-sample="{name}"]').click()
             expect(row(page, name)).to_have_count(1, timeout=30_000)
         wait_status(page, "clean-invoice.pdf", "valid")
-        wait_status(page, "wrong-total.jpg", "valid")
+        wait_status(page, "wrong-total.jpg", "needs review")
         wait_status(page, "missing-number.pdf", "needs review")
         wait_status(page, "not-financial.pdf", "rejected")
         check(True, "four samples reached the expected statuses", failures)
@@ -88,18 +88,29 @@ def main() -> int:
         print("review")
         card = page.locator(".card", has_text="missing-number.pdf")
         check("document number is missing" in card.inner_text(), "explanation is shown", failures)
-        card.scroll_into_view_if_needed()
-        card.screenshot(path=str(args.out / "demo-review.png"))
         card.locator('input[name="invoice_number"]').fill("INV-HUMAN-1")
         card.get_by_role("button", name="Approve").click()
         wait_status(page, "missing-number.pdf", "approved")
         check(True, "approval resumed the workflow", failures)
 
+        print("one-click monetary fix")
+        card = page.locator(".card", has_text="wrong-total.jpg")
+        total = card.locator('input[name="total"]')
+        check(total.input_value() == "81.27", "the corrected total is pre-filled", failures)
+        check("93.27" in card.inner_text(), "the printed total and the reason are shown", failures)
+        card.scroll_into_view_if_needed()
+        card.screenshot(path=str(args.out / "demo-review.png"))
+        card.get_by_role("button", name="Approve suggested fix").click()
+        wait_status(page, "wrong-total.jpg", "approved")
+        check(
+            "81.27" in row(page, "wrong-total.jpg").inner_text(), "one click applied it", failures
+        )
+
         print("audit trail")
         row(page, "wrong-total.jpg").click()
         expect(page.locator("#audit li").first).to_be_visible(timeout=30_000)
         audit = page.locator("#audit").inner_text()
-        for agent in ("classifier", "extractor", "validator", "resolver", "finalizer"):
+        for agent in ("classifier", "extractor", "validator", "resolver", "reviewer", "human"):
             check(agent in audit, f"audit shows the {agent}", failures)
         page.locator("#detail").screenshot(path=str(args.out / "demo-audit.png"))
 
@@ -109,6 +120,7 @@ def main() -> int:
         csv = Path(download.value.path()).read_text(encoding="utf-8")
         check(len(csv.strip().splitlines()) == 4, "CSV has the three saved documents", failures)
         check("INV-HUMAN-1" in csv, "CSV contains the human correction", failures)
+        check("81.27" in csv and "93.27" not in csv, "CSV has the approved total", failures)
 
         print("isolation and mobile")
         other = browser.new_context().new_page()

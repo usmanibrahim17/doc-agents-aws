@@ -11,7 +11,9 @@ from app.common.agent import Runtime
 def process(event: dict, runtime: Runtime) -> dict:
     task_token, event = event["task_token"], event["input"]
     document = runtime.get_document(event["doc_id"])
-    explanation = rules.explain(document.get("issues", []), document.get("tried", []))
+    explanation = rules.explain(
+        document.get("issues", []), document.get("tried", []), document.get("suggestions")
+    )
     runtime.reviews.put_item(
         Item={
             "doc_id": event["doc_id"],

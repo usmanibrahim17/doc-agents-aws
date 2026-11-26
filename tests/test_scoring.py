@@ -32,7 +32,8 @@ def test_perfect_extraction_and_correct_auto_fix():
     result = scoring.score([(TRUTH, document)])
     assert result["field_accuracy"] == result["line_item_accuracy"] == 1
     assert result["validation_precision"] == result["validation_recall"] == 1
-    assert result["fixable_fixed_correctly"] == [1, 1]
+    assert result["monetary_fixes_correct"] == [1, 1]
+    assert result["amounts_changed_without_a_person"] == 1
     assert result["mistakes"] == []
 
 
@@ -42,3 +43,21 @@ def test_missed_fault_lowers_recall():
     assert result["classification_accuracy"] == 0
     assert result["validation_recall"] == 0
     assert result["field_accuracy"] == 0
+
+
+def test_monetary_fix_waiting_for_approval():
+    document = {
+        "document_type": "invoice",
+        "category": "Meals",
+        "first_fields": TRUTH["fields"],
+        "fields": TRUTH["fields"],
+        "suggestions": {"total": {"value": 2}},
+        "first_issues": [{"code": "total_mismatch", "severity": "error"}],
+        "status": "needs_review",
+    }
+    result = scoring.score([(TRUTH, document)])
+    assert result["monetary_fixes_correct"] == [1, 1]
+    assert result["amounts_changed_without_a_person"] == 0
+    assert result["auto_fix_rate"] == 0
+    wrong = document | {"suggestions": {"total": {"value": 3}}}
+    assert scoring.score([(TRUTH, wrong)])["monetary_fixes_correct"] == [0, 1]

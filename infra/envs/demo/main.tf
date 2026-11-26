@@ -36,6 +36,9 @@ module "docagent" {
   lambda_zip_path          = "${path.root}/../../../dist/app.zip"
   workflow_definition_path = "${path.root}/../../../statemachine/workflow.asl.json"
 
+  # Money is never changed without a person: monetary fixes are suggested for one-click approval.
+  auto_fix_monetary_amounts = false
+
   # One setting switches provider (Bedrock quota is 0 on this account).
   ai_provider = "gemini"
 

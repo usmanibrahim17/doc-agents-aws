@@ -35,6 +35,7 @@ PUBLIC_FIELDS = (
     "first_issues",
     "issues",
     "tried",
+    "suggestions",
     "explanation",
     "reason",
     "agents_run",

@@ -1,5 +1,19 @@
 # Evaluation results
 
+## Run history
+
+One row per run, oldest first. "Fixes right" is non-monetary fixes applied, then monetary fixes
+(applied or suggested, according to the setting). The last column counts documents saved with no
+person involved whose money differs from what was read.
+
+<!-- runs:start -->
+| Date | Set | Monetary fixes | Docs | Classification | Fields | Line items | Category | Precision | Recall | Saved without a person | Fixes right | Unfixable to a person | Amounts changed without a person |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2026-11-26 | Generated | auto-applied | 33 | 100.0% | 100.0% | 100.0% | 100.0% | 100.0% | 100.0% | 6 of 14 | 3/3 and 3/3 | 8/8 | 3 |
+<!-- runs:end -->
+
+<!-- documents:start -->
+## Latest run: generated documents
 Run on 2026-11-26 against the deployed stack, model `gemini-3.5-flash-lite`.
 33 synthetic documents (30 financial, 3 not), all for
 fictional companies, generated from ground truth by `scripts/generate_dataset.py`.
@@ -22,11 +36,11 @@ fictional companies, generated from ground truth by `scripts/generate_dataset.py
 
 Per-field extraction accuracy: vendor 100.0%, invoice_number 100.0%, date 100.0%, currency 100.0%, subtotal 100.0%, tax 100.0%, total 100.0%.
 
-## Every miss
+### Every miss
 
 - none
 
-## Cost per 1,000 documents
+### Cost per 1,000 documents
 
 Measured averages per document: 1971 input and
 297 output tokens, 8.8 state transitions,
@@ -41,7 +55,7 @@ Measured averages per document: 1971 input and
 AWS breakdown: Step Functions $0.220, Lambda $0.063, DynamoDB $0.022, API Gateway $0.006, S3 + SQS $0.008.
 Prices and what is excluded: `evals/cost.py`.
 
-## Method
+### Method
 
 - Scored on each agent's first output: extraction before any Resolver change, issues from the
   first validation pass.
@@ -50,3 +64,10 @@ Prices and what is excluded: `evals/cost.py`.
   check, not an independent benchmark.
 - The documents are machine-rendered with clear print; the scans add only slight rotation, noise
   and blur. Real photos (creases, shadows, handwriting, unusual layouts) will score lower.
+<!-- documents:end -->
+
+<!-- photos:start -->
+## Latest run: real photos
+
+Not run yet. See [photos/README.md](photos/README.md).
+<!-- photos:end -->

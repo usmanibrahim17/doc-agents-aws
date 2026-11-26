@@ -402,7 +402,7 @@ def write_samples(records):
             "A scanned receipt",
             lambda r: not r["faults"] and r["file"].endswith("jpg"),
         ),
-        ("wrong-total", "Wrong total (auto-fixed)", lambda r: "wrong_total" in r["faults"]),
+        ("wrong-total", "Wrong total (one-click fix)", lambda r: "wrong_total" in r["faults"]),
         (
             "misspelled-vendor",
             "Misspelled vendor (auto-fixed)",

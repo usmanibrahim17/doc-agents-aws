@@ -114,6 +114,12 @@ variable "web_dir" {
   type        = string
 }
 
+variable "auto_fix_monetary_amounts" {
+  description = "Let the Resolver change money (totals, tax, line amounts) without a person. Default: such fixes are only suggested and need review."
+  type        = bool
+  default     = false
+}
+
 variable "force_destroy" {
   description = "Allow terraform destroy to delete non-empty buckets (demo only)."
   type        = bool

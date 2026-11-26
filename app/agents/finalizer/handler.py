@@ -31,19 +31,24 @@ def process(event: dict, runtime: Runtime) -> dict:
 
     approved = review.get("decision") == "approved"
     updates = {"status": "approved" if approved else "rejected", "reviewed": True}
-    corrected = []
-    if approved and review.get("fields"):
+    corrected, accepted = [], []
+    if approved:
         document = runtime.get_document(event["doc_id"])
         fields = dict(document["fields"])
+        suggestions = document.get("suggestions", {})
+        submitted = review.get("fields") or {}
+        # Approving accepts the suggested corrections; anything the person typed wins over them.
+        chosen = {name: s["value"] for name, s in suggestions.items()} | submitted
         allowed = set(schemas.EXTRACTION["properties"]) - {"category"}
-        for name, value in review["fields"].items():
+        for name, value in chosen.items():
             if name in allowed and fields.get(name) != value:
                 fields[name] = value
                 corrected.append(name)
+        accepted = [n for n, s in suggestions.items() if chosen[n] == s["value"]]
         updates["fields"] = fields
-        if review["fields"].get("category") in schemas.EXTRACTION["properties"]["category"]["enum"]:
-            updates["category"] = review["fields"]["category"]
-    if not approved:
+        if submitted.get("category") in schemas.EXTRACTION["properties"]["category"]["enum"]:
+            updates["category"] = submitted["category"]
+    else:
         updates["reason"] = "Rejected by the reviewer."
     runtime.delete_review(event["doc_id"])
     runtime.record(
@@ -52,6 +57,7 @@ def process(event: dict, runtime: Runtime) -> dict:
         "approved" if approved else "rejected",
         updates=updates,
         corrected_fields=corrected,
+        accepted_suggestions=accepted,
     )
     return {"status": updates["status"]}
 

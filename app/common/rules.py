@@ -169,10 +169,40 @@ def recompute_totals(fields: dict) -> dict:
     return changes
 
 
-def explain(issues: list[dict], tried: list[str]) -> str:
+MONETARY_FIELDS = ("currency", "subtotal", "tax", "total")
+LINE_NUMBERS = ("quantity", "unit_price", "amount")
+
+
+def is_monetary_change(name: str, old, new) -> bool:
+    """Would replacing `old` with `new` change any money on the document?
+
+    Filling an empty amount counts. In line items only the numbers count, not the wording.
+    """
+    if name == "line_items":
+
+        def numbers(lines):
+            return [tuple(line.get(key) for key in LINE_NUMBERS) for line in lines or []]
+
+        return numbers(old) != numbers(new)
+    return name in MONETARY_FIELDS and old != new
+
+
+def show(value) -> str:
+    if isinstance(value, list):
+        return f"{len(value)} line items"
+    return "empty" if value in (None, "") else str(value)
+
+
+def explain(issues: list[dict], tried: list[str], suggestions: dict | None = None) -> str:
     """Plain-English summary for the human reviewer."""
     problems = " ".join(item["message"] for item in errors(issues))
     attempts = " ".join(tried) if tried else "No automatic fix applies to this kind of problem."
-    return (
+    text = (
         f"This document needs a person to check it. {problems} What was already tried: {attempts}"
     )
+    if suggestions:
+        text += (
+            " Amounts are never changed without you: the suggested correction is pre-filled, "
+            "so Approve accepts it."
+        )
+    return text

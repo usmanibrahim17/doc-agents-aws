@@ -98,18 +98,37 @@ function renderResults(documents) {
 function reviewCard(doc) {
   const problems = new Set((doc.issues || []).filter((i) => i.severity === "error")
     .map((i) => i.field));
+  const suggestions = doc.suggestions || {};
   const form = el("form");
   for (const [name, label] of EDITABLE) {
-    const input = el("input", { name, value: doc.fields?.[name] ?? "" });
-    if (problems.has(name)) input.className = "problem";
-    form.append(el("label", { textContent: label }, input));
+    const suggestion = suggestions[name];
+    const value = suggestion ? suggestion.value : doc.fields?.[name];
+    const input = el("input", { name, value: value ?? "" });
+    if (suggestion) input.className = "suggested";
+    else if (problems.has(name)) input.className = "problem";
+    const note = suggestion ? el("small", {
+      textContent: `Suggested. Document says ${suggestion.old ?? "nothing"}; ${suggestion.reason}.`,
+    }) : null;
+    form.append(el("label", { textContent: label }, input, note));
+  }
+  // Line items are not editable here, so a suggested change is listed; Approve accepts it.
+  const lines = suggestions.line_items;
+  if (lines) {
+    form.append(el("div", { className: "wide scroll" },
+      el("small", { textContent: `Suggested line items (${lines.reason}):` }),
+      table(["Description", "Qty", "Unit price", "Amount"], lines.value
+        .map((line) => [line.description, line.quantity, line.unit_price, line.amount]))));
   }
   const category = el("select", { name: "category" },
     ...CATEGORIES.map((value) => el("option", { value, textContent: value })));
   category.value = doc.category || "Other";
   form.append(el("label", { textContent: "Category" }, category));
 
-  const approve = el("button", { type: "submit", className: "primary", textContent: "Approve" });
+  const approve = el("button", {
+    type: "submit",
+    className: "primary",
+    textContent: Object.keys(suggestions).length ? "Approve suggested fix" : "Approve",
+  });
   const reject = el("button", { type: "button", textContent: "Reject" });
   const view = el("button", { type: "button", textContent: "View document and audit" });
   form.append(el("div", { className: "actions" }, approve, reject, view));

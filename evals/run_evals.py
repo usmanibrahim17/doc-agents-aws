@@ -1,15 +1,18 @@
-"""Run the evaluation set against the deployed API and write evals/RESULTS.md.
+"""Run an evaluation set against the deployed API and update evals/RESULTS.md.
 
-    AWS_PROFILE=rag-demo python evals/run_evals.py --url <api_url>
+    AWS_PROFILE=rag-demo python evals/run_evals.py --url <api_url>               # generated set
+    AWS_PROFILE=rag-demo python evals/run_evals.py --url <api_url> --set photos  # evals/photos/
 
-Documents go through the public API exactly like a visitor's. Step Functions history and Lambda
-CloudWatch metrics (for the cost estimate) are read with your AWS credentials.
+Documents go through the public API exactly like a visitor's. The Resolver setting, Step
+Functions history and Lambda metrics (for the cost estimate) are read with your AWS credentials.
+Every run appends one row to the history table; earlier rows are kept.
 """
 
 import argparse
 import json
 import statistics
 import sys
+import tempfile
 import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -18,10 +21,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path[:0] = [str(ROOT), str(ROOT / "scripts")]
 
 from api_client import Client  # noqa: E402
+from clean_photos import PHOTO_SUFFIXES, clean  # noqa: E402
 
-from evals import cost, scoring  # noqa: E402
+from evals import cost, results_file, scoring  # noqa: E402
 
 DATA = ROOT / "evals" / "data"
+PHOTOS = ROOT / "evals" / "photos"
+RESULTS = ROOT / "evals" / "RESULTS.md"
 FUNCTIONS = (
     "classifier",
     "extractor",
@@ -44,14 +50,26 @@ def percentile(values: list[float], share: float) -> float:
     return ordered[min(len(ordered) - 1, round(share * (len(ordered) - 1)))]
 
 
-def run_batch(client: Client, records: list[dict]) -> dict[str, dict]:
+def run_batch(client: Client, records: list[dict], files: dict | None = None) -> dict[str, dict]:
     """Upload together, wait, then fetch each document with its first-pass results."""
-    ids = {r["id"]: client.upload(DATA / "documents" / r["file"]) for r in records}
+    files = files or {r["id"]: DATA / "documents" / r["file"] for r in records}
+    ids = {r["id"]: client.upload(files[r["id"]]) for r in records}
     client.wait(list(ids.values()), timeout=1800)
     return {
         name: client.request("GET", f"/documents/{doc_id}")["document"]
         for name, doc_id in ids.items()
     }
+
+
+def money_policy() -> str:
+    """How the deployed Resolver treats monetary fixes."""
+    import boto3
+
+    config = boto3.client("lambda", region_name="us-east-1").get_function_configuration(
+        FunctionName="docagent-resolver"
+    )
+    auto = config["Environment"]["Variables"].get("AUTO_FIX_MONETARY", "false") == "true"
+    return "auto-applied" if auto else "need review"
 
 
 def transitions(doc_ids: list[str]) -> float:
@@ -107,7 +125,8 @@ def pct(value) -> str:
 def report(result: dict) -> str:
     s, latency, money = result["scores"], result["latency"], result["cost"]
     counts, fixes = s["validation_counts"], s["auto_fix_counts"]
-    fixable, unfixable = s["fixable_fixed_correctly"], s["unfixable_sent_to_human"]
+    auto, monetary = s["non_monetary_fixed_correctly"], s["monetary_fixes_correct"]
+    unfixable = s["unfixable_sent_to_human"]
     rows = [
         (
             "Classifier",
@@ -143,15 +162,27 @@ def report(result: dict) -> str:
         ),
         (
             "Resolver",
-            "Auto-fix rate",
+            "Saved without a person",
             pct(s["auto_fix_rate"]),
-            f"{fixes['fixed']} of {fixes['flagged']} flagged documents saved without a human",
+            f"{fixes['fixed']} of {fixes['flagged']} flagged documents",
         ),
         (
             "Resolver",
-            "Fixable ones fixed correctly",
-            f"{fixable[0]}/{fixable[1]}",
-            "wrong totals, misspelled vendors",
+            "Non-monetary fixes applied correctly",
+            f"{auto[0]}/{auto[1]}",
+            "misspelled vendors",
+        ),
+        (
+            "Resolver",
+            "Monetary fixes correct",
+            f"{monetary[0]}/{monetary[1]}",
+            f"wrong totals; monetary fixes {result['policy']}",
+        ),
+        (
+            "Resolver",
+            "Amounts changed without a person",
+            str(s["amounts_changed_without_a_person"]),
+            "documents saved with money different from what was read",
         ),
         (
             "Resolver",
@@ -182,7 +213,7 @@ def report(result: dict) -> str:
     table = "\n".join(f"| {' | '.join(row)} |" for row in rows)
     per_field = ", ".join(f"{k} {pct(v)}" for k, v in s["per_field_accuracy"].items())
     mistakes = "\n".join(f"- {m}" for m in s["mistakes"]) or "- none"
-    return f"""# Evaluation results
+    return f"""## Latest run: generated documents
 
 Run on {result["date"]} against the deployed stack, model `{result["model"]}`.
 {s["documents"]} synthetic documents ({s["financial_documents"]} financial, 3 not), all for
@@ -194,11 +225,11 @@ fictional companies, generated from ground truth by `scripts/generate_dataset.py
 
 Per-field extraction accuracy: {per_field}.
 
-## Every miss
+### Every miss
 
 {mistakes}
 
-## Cost per 1,000 documents
+### Cost per 1,000 documents
 
 Measured averages per document: {money["input_tokens"]:.0f} input and
 {money["output_tokens"]:.0f} output tokens, {money["transitions"]:.1f} state transitions,
@@ -213,7 +244,7 @@ Measured averages per document: {money["input_tokens"]:.0f} input and
 AWS breakdown: {", ".join(f"{k} ${v:.3f}" for k, v in money["aws"].items())}.
 Prices and what is excluded: `evals/cost.py`.
 
-## Method
+### Method
 
 - Scored on each agent's first output: extraction before any Resolver change, issues from the
   first validation pass.
@@ -225,13 +256,96 @@ Prices and what is excluded: `evals/cost.py`.
 """
 
 
+def history_row(result: dict, name: str) -> str:
+    s = result["scores"]
+    auto, monetary = s["non_monetary_fixed_correctly"], s["monetary_fixes_correct"]
+    fixes, unfixable = s["auto_fix_counts"], s["unfixable_sent_to_human"]
+    cells = [
+        result["date"],
+        name,
+        result["policy"],
+        str(s["documents"]),
+        pct(s["classification_accuracy"]),
+        pct(s["field_accuracy"]),
+        pct(s["line_item_accuracy"]),
+        pct(s["category_accuracy"]),
+        pct(s["validation_precision"]),
+        pct(s["validation_recall"]),
+        f"{fixes['fixed']} of {fixes['flagged']}",
+        f"{auto[0]}/{auto[1]} and {monetary[0]}/{monetary[1]}",
+        f"{unfixable[0]}/{unfixable[1]}",
+        str(s["amounts_changed_without_a_person"]),
+    ]
+    return f"| {' | '.join(cells)} |"
+
+
+def save(result: dict, documents: dict, section: str, name: str, body: str) -> None:
+    out = ROOT / "evals" / "results"
+    out.mkdir(exist_ok=True)
+    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    (out / f"{stamp}-{section}.json").write_text(
+        json.dumps(result | {"documents": documents}, indent=2), encoding="utf-8"
+    )
+    text = results_file.update(
+        RESULTS.read_text(encoding="utf-8"), history_row(result, name), section, body
+    )
+    RESULTS.write_text(text, encoding="utf-8", newline="\n")
+    print(history_row(result, name))
+    print(body)
+
+
+def photo_report(result: dict, count: int) -> str:
+    s = result["scores"]
+    mistakes = "\n".join(f"- {m}" for m in s["mistakes"]) or "- none"
+    per_field = ", ".join(f"{k} {pct(v)}" for k, v in s["per_field_accuracy"].items())
+    return f"""## Latest run: real photos
+
+Run on {result["date"]}: {count} photos of printed documents from `evals/photos/`, scored against
+the same ground truth. Scores are in the history table above.
+
+Per-field extraction accuracy: {per_field}.
+
+### Every miss
+
+{mistakes}
+"""
+
+
+def run_photos(url: str) -> None:
+    truth = {p.stem: json.loads(p.read_text()) for p in (DATA / "truth").glob("*.json")}
+    photos = sorted(p for p in PHOTOS.iterdir() if p.suffix.lower() in PHOTO_SUFFIXES)
+    if not photos:
+        sys.exit("no photos in evals/photos/ yet: see evals/photos/README.md")
+    unknown = [p.name for p in photos if p.stem not in truth]
+    if unknown or len({p.stem for p in photos}) != len(photos):
+        sys.exit(f"name each photo <document id>.jpg, one per document; check: {unknown}")
+    records = [truth[p.stem] for p in photos]
+    with tempfile.TemporaryDirectory() as folder:
+        files = {}
+        for photo in photos:  # upright, within the upload limit, no camera metadata
+            files[photo.stem] = Path(folder) / f"{photo.stem}.jpg"
+            clean(photo, files[photo.stem])
+        documents = run_batch(Client(url), records, files)
+    result = {
+        "date": datetime.now(UTC).date().isoformat(),
+        "policy": money_policy(),
+        "scores": scoring.score([(r, documents[r["id"]]) for r in records]),
+    }
+    save(result, documents, "photos", "Real photos", photo_report(result, len(photos)))
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--url", required=True)
+    parser.add_argument("--set", choices=["generated", "photos"], default="generated")
     parser.add_argument("--latency-samples", type=int, default=5)
     args = parser.parse_args()
+    if args.set == "photos":
+        run_photos(args.url)
+        return
 
     records = [json.loads(p.read_text()) for p in sorted((DATA / "truth").glob("*.json"))]
+    policy = money_policy()
     started = datetime.now(UTC) - timedelta(minutes=1)
     client = Client(args.url)
     originals = [r for r in records if not r["duplicate_of"]]
@@ -258,6 +372,7 @@ def main() -> None:
     result = {
         "date": datetime.now(UTC).date().isoformat(),
         "model": "gemini-3.5-flash-lite",
+        "policy": policy,
         "scores": scores,
         "latency": {
             "single_p50": statistics.median(single),
@@ -268,14 +383,7 @@ def main() -> None:
         },
         "cost": money,
     }
-    out = ROOT / "evals" / "results"
-    out.mkdir(exist_ok=True)
-    stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-    (out / f"{stamp}.json").write_text(
-        json.dumps(result | {"documents": documents}, indent=2), encoding="utf-8"
-    )
-    (ROOT / "evals" / "RESULTS.md").write_text(report(result), encoding="utf-8", newline="\n")
-    print(report(result))
+    save(result, documents, "documents", "Generated", report(result))
 
 
 if __name__ == "__main__":

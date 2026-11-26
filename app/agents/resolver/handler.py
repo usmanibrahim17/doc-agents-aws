@@ -4,11 +4,16 @@
 2. fuzzy matching of the vendor name against the known-vendors table,
 3. recomputing totals from the line items.
 
+Policy: non-monetary fixes (vendor name, a date or number found on a second reading) are applied.
+A change to any monetary value is only SUGGESTED: it goes to a person with the correction
+pre-filled and the reason, unless AUTO_FIX_MONETARY is "true".
+
 Every change is recorded with its old value. If nothing changes, the workflow goes to a person.
 """
 
 from app.common import rules, schemas
 from app.common.agent import Runtime
+from app.common.config import env
 from app.common.providers import get_provider
 
 SYSTEM = (
@@ -35,15 +40,12 @@ def _fields_to_reread(issues: list[dict]) -> list[str]:
     return wanted
 
 
-def _show(value) -> str:
-    if isinstance(value, list):
-        return f"{len(value)} line items"
-    return "empty" if value in (None, "") else str(value)
-
-
-def process(event: dict, runtime: Runtime, provider) -> dict:
+def process(event: dict, runtime: Runtime, provider, auto_fix_monetary: bool = False) -> dict:
     document = runtime.get_document(event["doc_id"])
     fields = dict(document["fields"])
+    suggestions = dict(document.get("suggestions", {}))
+    # The document as it would look if every suggestion were accepted: later tools build on it.
+    proposed = fields | {name: s["value"] for name, s in suggestions.items()}
     issues = document.get("issues", [])
     attempt = int(event.get("resolution", {}).get("attempts", 0)) + 1
     tried: list[str] = []
@@ -51,14 +53,21 @@ def process(event: dict, runtime: Runtime, provider) -> dict:
     result = None
     changed = False
 
-    def apply(name: str, value, how: str) -> None:
+    def fix(name: str, value, how: str) -> None:
+        """Apply a correction, or only suggest it if it touches money."""
         nonlocal changed
-        old = fields.get(name)
+        old = proposed.get(name)
+        proposed[name] = value
+        text = f"{name}: {rules.show(old)} to {rules.show(value)} ({how})."
+        if not auto_fix_monetary and rules.is_monetary_change(name, fields.get(name), value):
+            suggestions[name] = {"value": value, "old": fields.get(name), "reason": how}
+            tried.append(f"Suggested, needs approval: {text}")
+            return
         fields[name] = value
+        suggestions.pop(name, None)
         changed = True
-        message = f"{name} changed from {_show(old)} to {_show(value)} ({how})."
-        tried.append(message)
-        notes.append(rules.issue("corrected", name, message, "warning"))
+        tried.append(f"Changed {text}")
+        notes.append(rules.issue("corrected", name, f"Changed {text}", "warning"))
 
     # Tool 1: focused re-extraction. Only on the first attempt: asking twice gains nothing.
     wanted = _fields_to_reread(issues)
@@ -76,39 +85,49 @@ def process(event: dict, runtime: Runtime, provider) -> dict:
             runtime.load_file(event),
             max_tokens=8192,
         )
+        different = False
         for name in wanted:
             value = result.data.get(name)
-            if value not in (None, "", []) and value != fields.get(name):
-                apply(name, value, "second reading of the document")
-        if not changed:
+            if value not in (None, "", []) and value != proposed.get(name):
+                different = True
+                fix(name, value, "second reading of the document")
+        if not different:
             tried.append(f"Re-read {', '.join(wanted)}: the document says the same thing.")
 
     # Tool 2: fuzzy vendor match.
     if any(i["code"] == "unknown_vendor" for i in issues):
         vendors = runtime.vendors()
-        if not rules.find_vendor(fields.get("vendor"), vendors):
-            match = rules.fuzzy_vendor(fields.get("vendor"), vendors)
+        if not rules.find_vendor(proposed.get("vendor"), vendors):
+            match = rules.fuzzy_vendor(proposed.get("vendor"), vendors)
             if match:
                 vendor, score = match
-                apply("vendor", vendor["name"], f"{score:.0%} match with a known vendor")
+                fix("vendor", vendor["name"], f"{score:.0%} match with a known vendor")
             else:
                 tried.append("Searched the known-vendors list: no close match.")
 
-    # Tool 3: recompute totals, judged on the values as they are now.
+    # Tool 3: recompute totals, judged on the values as they would be now.
     math_codes = {"line_sum", "total_mismatch"}
-    if math_codes & {i["code"] for i in rules.check_fields(fields)}:
-        corrections = rules.recompute_totals(fields)
+    if math_codes & {i["code"] for i in rules.check_fields(proposed)}:
+        corrections = rules.recompute_totals(proposed)
         for name, value in corrections.items():
-            apply(name, value, "recomputed from the line items")
+            fix(name, value, "recomputed from the line items")
         if not corrections:
             tried.append("Could not recompute the totals safely from the line items.")
 
     history = document.get("tried", []) + tried
+    outcome = "applied fixes" if changed else "no fix applied"
+    if suggestions:
+        outcome += f", {len(suggestions)} suggestion(s) for review"
     runtime.record(
         event,
         "resolver",
-        f"attempt {attempt}: " + ("applied fixes" if changed else "no fix found"),
-        updates={"fields": fields, "tried": history, "issues": _keep(issues, notes)},
+        f"attempt {attempt}: {outcome}",
+        updates={
+            "fields": fields,
+            "suggestions": suggestions,
+            "tried": history,
+            "issues": _keep(issues, notes),
+        },
         result=result,
         tried=tried,
     )
@@ -120,4 +139,5 @@ def _keep(issues: list[dict], notes: list[dict]) -> list[dict]:
 
 
 def handler(event, context):
-    return process(event, Runtime(), get_provider())
+    auto_fix = env("AUTO_FIX_MONETARY", "false").lower() == "true"
+    return process(event, Runtime(), get_provider(), auto_fix)

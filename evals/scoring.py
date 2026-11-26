@@ -1,6 +1,6 @@
 """Per-agent metrics. Pure functions over (truth record, processed document) pairs."""
 
-from app.common.rules import normalize_vendor
+from app.common.rules import MONETARY_FIELDS, is_monetary_change, normalize_vendor
 
 FIELDS = ("vendor", "invoice_number", "date", "currency", "subtotal", "tax", "total")
 AUTO_FINISHED = "valid"
@@ -33,6 +33,29 @@ def line_matches(expected: list[dict], actual: list[dict]) -> int:
     return correct
 
 
+def money_changed(document: dict) -> bool:
+    """True if a document saved with no person involved differs in money from what was read."""
+    if document.get("status") != AUTO_FINISHED:
+        return False
+    before, after = document.get("first_fields") or {}, document.get("fields") or {}
+    return any(
+        is_monetary_change(name, before.get(name), after.get(name))
+        for name in (*MONETARY_FIELDS, "line_items")
+    )
+
+
+def correctly_suggested(truth: dict, document: dict) -> bool:
+    """Waiting for a person, with exactly the right values suggested and nothing applied."""
+    suggestions = document.get("suggestions") or {}
+    expected = truth["resolved_values"]
+    return (
+        document.get("status") == "needs_review"
+        and set(suggestions) == set(expected)
+        and all(same(k, v, suggestions[k]["value"]) for k, v in expected.items())
+        and all(same(k, truth["fields"][k], document["fields"].get(k)) for k in expected)
+    )
+
+
 def ratio(part: int, whole: int) -> float | None:
     return part / whole if whole else None
 
@@ -40,7 +63,9 @@ def ratio(part: int, whole: int) -> float | None:
 def score(pairs: list[tuple[dict, dict]]) -> dict:
     classified = field_ok = field_all = lines_ok = lines_all = category_ok = 0
     tp = fp = fn = exact = 0
-    flagged = auto_fixed = fixable = fixable_correct = unfixable = unfixable_to_human = 0
+    flagged = auto_fixed = unfixable = unfixable_to_human = changed_money = 0
+    auto = [0, 0]  # non-monetary fixes: [applied correctly, expected]
+    money = [0, 0]  # monetary fixes: [handled correctly, expected]
     per_field = {name: [0, 0] for name in FIELDS}
     mistakes: list[str] = []
     financial = 0
@@ -87,14 +112,23 @@ def score(pairs: list[tuple[dict, dict]]) -> dict:
         if was_flagged:
             flagged += 1
             auto_fixed += status == AUTO_FINISHED
+        changed_money += money_changed(document)
         if is_bad and truth["resolvable"]:
-            fixable += 1
-            correct = status == AUTO_FINISHED and all(
-                same(k, v, fields_now.get(k)) for k, v in truth["resolved_values"].items()
+            expected_values = truth["resolved_values"]
+            applied = status == AUTO_FINISHED and all(
+                same(k, v, fields_now.get(k)) for k, v in expected_values.items()
             )
-            fixable_correct += correct
-            if not correct:
-                mistakes.append(f"{doc_id}: designed to be auto-fixed, ended {status}")
+            if set(expected_values) & set(MONETARY_FIELDS):
+                money[1] += 1
+                # Applied is also right when the stack allows automatic monetary fixes.
+                ok = applied or correctly_suggested(truth, document)
+                money[0] += ok
+            else:
+                auto[1] += 1
+                ok = applied
+                auto[0] += ok
+            if not ok:
+                mistakes.append(f"{doc_id}: expected a fix, ended {status}")
         if is_bad and not truth["resolvable"]:
             unfixable += 1
             unfixable_to_human += status == "needs_review"
@@ -115,7 +149,9 @@ def score(pairs: list[tuple[dict, dict]]) -> dict:
         "validation_counts": {"true_positive": tp, "false_positive": fp, "false_negative": fn},
         "auto_fix_rate": ratio(auto_fixed, flagged),
         "auto_fix_counts": {"fixed": auto_fixed, "flagged": flagged},
-        "fixable_fixed_correctly": [fixable_correct, fixable],
+        "non_monetary_fixed_correctly": auto,
+        "monetary_fixes_correct": money,
+        "amounts_changed_without_a_person": changed_money,
         "unfixable_sent_to_human": [unfixable_to_human, unfixable],
         "mistakes": mistakes,
     }

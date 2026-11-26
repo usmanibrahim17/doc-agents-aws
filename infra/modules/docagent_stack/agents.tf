@@ -199,6 +199,7 @@ resource "aws_lambda_function" "agent" {
         VENDORS_TABLE   = aws_dynamodb_table.vendors.name
       },
       each.value.uses_ai ? local.ai_env : tomap({}),
+      each.key == "resolver" ? tomap({ AUTO_FIX_MONETARY = tostring(var.auto_fix_monetary_amounts) }) : tomap({}),
     )
   }
 
