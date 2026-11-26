@@ -1,0 +1,50 @@
+{
+  "Comment": "Classifier -> reject, or Extractor -> save. Any unrecoverable error marks the document failed.",
+  "StartAt": "Classify",
+  "TimeoutSeconds": 604800,
+  "States": {
+    "Classify": {
+      "Type": "Task",
+      "Resource": "${classifier_arn}",
+      "ResultPath": "$.classification",
+      "Retry": ${retry},
+      "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "MarkFailed" }],
+      "Next": "IsFinancial"
+    },
+    "IsFinancial": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.classification.document_type",
+          "StringEquals": "not_financial",
+          "Next": "Rejected"
+        }
+      ],
+      "Default": "Extract"
+    },
+    "Rejected": { "Type": "Succeed" },
+    "Extract": {
+      "Type": "Task",
+      "Resource": "${extractor_arn}",
+      "ResultPath": "$.extraction",
+      "Retry": ${retry},
+      "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "MarkFailed" }],
+      "Next": "Save"
+    },
+    "Save": {
+      "Type": "Task",
+      "Resource": "${finalizer_arn}",
+      "ResultPath": "$.result",
+      "Retry": ${retry},
+      "End": true
+    },
+    "MarkFailed": {
+      "Type": "Task",
+      "Resource": "${finalizer_arn}",
+      "ResultPath": "$.result",
+      "Retry": ${retry},
+      "Next": "Failed"
+    },
+    "Failed": { "Type": "Fail", "Error": "DocumentFailed" }
+  }
+}

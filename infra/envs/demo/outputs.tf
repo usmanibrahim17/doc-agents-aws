@@ -1,3 +1,7 @@
+output "state_machine_arn" {
+  value = module.docagent.state_machine_arn
+}
+
 output "uploads_bucket_name" {
   value = module.docagent.uploads_bucket_name
 }

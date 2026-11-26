@@ -1,3 +1,7 @@
+output "state_machine_arn" {
+  value = aws_sfn_state_machine.workflow.arn
+}
+
 output "uploads_bucket_name" {
   value = aws_s3_bucket.uploads.bucket
 }

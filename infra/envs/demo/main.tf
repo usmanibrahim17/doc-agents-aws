@@ -23,8 +23,21 @@ provider "aws" {
   region = "us-east-1"
 }
 
+data "aws_caller_identity" "current" {}
+
 module "docagent" {
   source = "../../modules/docagent_stack"
+
+  # Created by infra/bootstrap. Every stack role carries it, and the CD deploy role may only
+  # create or change stack roles that do.
+  permissions_boundary_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/docagent-stack-boundary"
+
+  # Built by scripts/build_zip.py; must exist before plan/validate.
+  lambda_zip_path          = "${path.root}/../../../dist/app.zip"
+  workflow_definition_path = "${path.root}/../../../statemachine/workflow.asl.json"
+
+  # One setting switches provider (Bedrock quota is 0 on this account).
+  ai_provider = "gemini"
 
   monthly_budget_usd  = var.monthly_budget_usd
   budget_alert_emails = var.budget_alert_emails

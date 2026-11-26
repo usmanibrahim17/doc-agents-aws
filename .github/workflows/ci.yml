@@ -17,6 +17,12 @@ jobs:
       - name: fmt
         run: terraform fmt -check -recursive infra
       # -backend=false: no state backend or AWS credentials needed to validate.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # The Lambda resources hash dist/app.zip, so it must exist before validate.
+      - name: build lambda zip
+        run: python scripts/build_zip.py
       - name: validate demo env (includes the module)
         working-directory: infra/envs/demo
         run: |
