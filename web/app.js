@@ -71,6 +71,11 @@ function badge(status) {
   return el("span", { className: `status ${status}`, textContent: STATUS[status] || status });
 }
 
+// A document that waited on the queue records "intake" twice; show each repeat once.
+function steps(agents) {
+  return agents.filter((agent, index) => agent !== agents[index - 1]).join(" → ");
+}
+
 function renderResults(documents) {
   $("empty").hidden = documents.length > 0;
   $("results").replaceChildren(...documents.map((doc) => {
@@ -81,7 +86,7 @@ function renderResults(documents) {
       el("td", { textContent: doc.fields?.vendor || "" }),
       el("td", { textContent: doc.category || "" }),
       el("td", { className: "num", textContent: money(doc, "total") }),
-      el("td", { className: "agents", textContent: (doc.agents_run || []).join(" → ") }));
+      el("td", { className: "agents", textContent: steps(doc.agents_run || []) }));
     row.dataset.id = doc.doc_id;
     const open = () => showDetail(doc.doc_id).catch((error) => say(error.message));
     row.addEventListener("click", open);
