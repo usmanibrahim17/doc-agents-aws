@@ -69,6 +69,9 @@ resource "aws_sfn_state_machine" "workflow" {
   definition = templatefile(var.workflow_definition_path, {
     classifier_arn = aws_lambda_function.agent["classifier"].arn
     extractor_arn  = aws_lambda_function.agent["extractor"].arn
+    validator_arn  = aws_lambda_function.agent["validator"].arn
+    resolver_arn   = aws_lambda_function.agent["resolver"].arn
+    reviewer_arn   = aws_lambda_function.agent["reviewer"].arn
     finalizer_arn  = aws_lambda_function.agent["finalizer"].arn
     retry          = local.retry
   })

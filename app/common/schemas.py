@@ -11,6 +11,16 @@ CLASSIFICATION = {
     "required": ["document_type", "reason"],
 }
 
+ANOMALY = {
+    "type": "object",
+    "properties": {
+        "anomalous": {"type": "boolean"},
+        "severity": {"type": "string", "enum": ["low", "high"]},
+        "explanation": {"type": "string", "description": "One short sentence."},
+    },
+    "required": ["anomalous", "severity", "explanation"],
+}
+
 # Every field is nullable: "not on the document" must be expressible, never invented.
 _TEXT = {"type": ["string", "null"]}
 _NUMBER = {"type": ["number", "null"]}

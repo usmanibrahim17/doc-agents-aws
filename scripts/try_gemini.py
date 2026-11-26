@@ -31,11 +31,11 @@ LINES = [
 ]
 
 
-def sample_png() -> bytes:
+def sample_png(lines: list[str] = LINES) -> bytes:
     image = Image.new("RGB", (720, 480), "white")
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default(size=24)
-    for index, line in enumerate(LINES):
+    for index, line in enumerate(lines):
         draw.text((40, 40 + index * 42), line, fill="black", font=font)
     buffer = io.BytesIO()
     image.save(buffer, "PNG")

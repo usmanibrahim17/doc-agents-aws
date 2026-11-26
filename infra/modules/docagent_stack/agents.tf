@@ -16,11 +16,24 @@ locals {
   })
 
   # What each agent may do beyond the common set (update its document, append to the audit log).
-  agents = {
-    classifier = { uses_ai = true, timeout = 150 }
-    extractor  = { uses_ai = true, timeout = 150 }
-    finalizer  = { uses_ai = false, timeout = 30 }
+  agent_defaults = {
+    uses_ai        = false
+    reads_uploads  = false
+    reads_document = false
+    reads_vendors  = false
+    finds_dups     = false
+    review_actions = []
+    timeout        = 30
   }
+  agent_settings = {
+    classifier = { uses_ai = true, reads_uploads = true, timeout = 150 }
+    extractor  = { uses_ai = true, reads_uploads = true, timeout = 150 }
+    validator  = { uses_ai = true, reads_document = true, reads_vendors = true, finds_dups = true, timeout = 150 }
+    resolver   = { uses_ai = true, reads_uploads = true, reads_document = true, reads_vendors = true, timeout = 150 }
+    reviewer   = { reads_document = true, review_actions = ["dynamodb:PutItem"] }
+    finalizer  = { reads_document = true, review_actions = ["dynamodb:DeleteItem"] }
+  }
+  agents = { for name, settings in local.agent_settings : name => merge(local.agent_defaults, settings) }
 }
 
 resource "terraform_data" "check_provider_settings" {
@@ -82,7 +95,47 @@ data "aws_iam_policy_document" "agent" {
   }
 
   dynamic "statement" {
-    for_each = each.value.uses_ai ? [1] : []
+    for_each = each.value.reads_document ? [1] : []
+
+    content {
+      sid       = "ReadDocument"
+      actions   = ["dynamodb:GetItem"]
+      resources = [aws_dynamodb_table.documents.arn]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = each.value.finds_dups ? [1] : []
+
+    content {
+      sid       = "FindDuplicates"
+      actions   = ["dynamodb:Query"]
+      resources = ["${aws_dynamodb_table.documents.arn}/index/by-dup-key"]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = each.value.reads_vendors ? [1] : []
+
+    content {
+      sid       = "ReadVendors"
+      actions   = ["dynamodb:Scan"]
+      resources = [aws_dynamodb_table.vendors.arn]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = length(each.value.review_actions) > 0 ? [1] : []
+
+    content {
+      sid       = "Reviews"
+      actions   = each.value.review_actions
+      resources = [aws_dynamodb_table.reviews.arn]
+    }
+  }
+
+  dynamic "statement" {
+    for_each = each.value.reads_uploads ? [1] : []
 
     content {
       sid       = "ReadUploads"
@@ -142,6 +195,8 @@ resource "aws_lambda_function" "agent" {
         DOCUMENTS_TABLE = aws_dynamodb_table.documents.name
         AUDIT_TABLE     = aws_dynamodb_table.audit.name
         UPLOADS_BUCKET  = aws_s3_bucket.uploads.bucket
+        REVIEWS_TABLE   = aws_dynamodb_table.reviews.name
+        VENDORS_TABLE   = aws_dynamodb_table.vendors.name
       },
       each.value.uses_ai ? local.ai_env : tomap({}),
     )

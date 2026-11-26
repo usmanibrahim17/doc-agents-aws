@@ -24,10 +24,37 @@ def _resource(name: str):
 class Runtime:
     """AWS access for the agents. Tests pass fakes instead."""
 
-    def __init__(self, documents=None, audit=None, bucket=None):
+    def __init__(self, documents=None, audit=None, bucket=None, reviews=None, vendors=None):
         self.documents = documents or _resource("dynamodb").Table(env("DOCUMENTS_TABLE"))
         self.audit = audit or _resource("dynamodb").Table(env("AUDIT_TABLE"))
-        self._bucket = bucket
+        self._bucket, self._reviews, self._vendors = bucket, reviews, vendors
+
+    @property
+    def reviews(self):
+        if self._reviews is None:
+            self._reviews = _resource("dynamodb").Table(env("REVIEWS_TABLE"))
+        return self._reviews
+
+    def delete_review(self, doc_id: str) -> None:
+        self.reviews.delete_item(Key={"doc_id": doc_id})
+
+    def vendors(self) -> list[dict]:
+        """The known-vendors table is small reference data, so a scan is fine."""
+        if self._vendors is None:
+            self._vendors = _resource("dynamodb").Table(env("VENDORS_TABLE"))
+        return self._vendors.scan()["Items"]
+
+    def get_document(self, doc_id: str) -> dict | None:
+        item = self.documents.get_item(Key={"doc_id": doc_id}, ConsistentRead=True).get("Item")
+        return store.from_dynamo(item) if item else None
+
+    def documents_with_dup_key(self, key: str) -> list[str]:
+        response = self.documents.query(
+            IndexName="by-dup-key",
+            KeyConditionExpression="dup_key = :key",
+            ExpressionAttributeValues={":key": key},
+        )
+        return [item["doc_id"] for item in response["Items"]]
 
     @property
     def bucket(self):

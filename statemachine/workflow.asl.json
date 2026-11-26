@@ -1,5 +1,5 @@
 {
-  "Comment": "Classifier -> reject, or Extractor -> save. Any unrecoverable error marks the document failed.",
+  "Comment": "Classifier -> Extractor -> Validator <-> Resolver (max 2) -> save, or wait for a person.",
   "StartAt": "Classify",
   "TimeoutSeconds": 604800,
   "States": {
@@ -28,6 +28,61 @@
       "Resource": "${extractor_arn}",
       "ResultPath": "$.extraction",
       "Retry": ${retry},
+      "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "MarkFailed" }],
+      "Next": "Validate"
+    },
+    "Validate": {
+      "Type": "Task",
+      "Resource": "${validator_arn}",
+      "ResultPath": "$.validation",
+      "Retry": ${retry},
+      "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "MarkFailed" }],
+      "Next": "IsValid"
+    },
+    "IsValid": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.validation.status", "StringEquals": "valid", "Next": "Save" },
+        {
+          "And": [
+            { "Variable": "$.resolution.attempts", "IsPresent": true },
+            { "Variable": "$.resolution.attempts", "NumericGreaterThanEquals": 2 }
+          ],
+          "Next": "HumanReview"
+        }
+      ],
+      "Default": "Resolve"
+    },
+    "Resolve": {
+      "Type": "Task",
+      "Resource": "${resolver_arn}",
+      "ResultPath": "$.resolution",
+      "Retry": ${retry},
+      "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "MarkFailed" }],
+      "Next": "DidAnythingChange"
+    },
+    "DidAnythingChange": {
+      "Type": "Choice",
+      "Choices": [{ "Variable": "$.resolution.changed", "BooleanEquals": true, "Next": "Validate" }],
+      "Default": "HumanReview"
+    },
+    "HumanReview": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${reviewer_arn}",
+        "Payload": { "input.$": "$", "task_token.$": "$$.Task.Token" }
+      },
+      "ResultPath": "$.review",
+      "TimeoutSeconds": 518400,
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.TooManyRequestsException", "Lambda.SdkClientException"],
+          "IntervalSeconds": 5,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ],
       "Catch": [{ "ErrorEquals": ["States.ALL"], "ResultPath": "$.error", "Next": "MarkFailed" }],
       "Next": "Save"
     },
