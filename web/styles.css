@@ -1,0 +1,39 @@
+:root { --ink: #1c2333; --muted: #5d667a; --line: #dde1ea; --accent: #2848a8; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 system-ui, sans-serif; color: var(--ink); background: #f5f6f9; }
+.banner { background: #fff1bf; border-bottom: 1px solid #e3c65a; padding: 10px 20px; text-align: center; }
+header, main, footer { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+h1 { margin-bottom: 0; }
+h2 { font-size: 18px; margin: 0 0 8px; }
+h3 { font-size: 15px; }
+section { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin: 16px 0; }
+.heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+button { font: inherit; padding: 7px 14px; border-radius: 7px; border: 1px solid var(--accent); background: #fff; color: var(--accent); cursor: pointer; }
+button:hover { background: #eef2fd; }
+button:disabled { opacity: .5; cursor: wait; }
+button.primary { background: var(--accent); color: #fff; }
+.upload input { display: block; margin-top: 6px; }
+#message { color: var(--muted); min-height: 1.5em; margin: 0; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; color: var(--muted); }
+.num { text-align: right; white-space: nowrap; }
+tbody tr[tabindex] { cursor: pointer; }
+tbody tr[tabindex]:hover, tbody tr[tabindex]:focus { background: #f2f5fd; }
+.status { display: inline-block; padding: 1px 9px; border-radius: 20px; font-size: 12px; background: #e8eaf0; white-space: nowrap; }
+.status.valid, .status.approved { background: #d5f2dd; color: #14602c; }
+.status.needs_review { background: #fff1bf; color: #735500; }
+.status.rejected, .status.failed { background: #fbdede; color: #8d1f1f; }
+.agents { font-size: 12px; color: var(--muted); }
+.count { background: #fff1bf; border-radius: 20px; padding: 0 9px; font-size: 14px; }
+.card { border: 1px solid #e3c65a; background: #fffdf4; border-radius: 8px; padding: 14px; margin-top: 10px; }
+.card form { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.card label { font-size: 12px; color: var(--muted); }
+.card input, .card select { width: 100%; font: inherit; padding: 6px; border: 1px solid var(--line); border-radius: 6px; }
+.card input.problem { border-color: #c99700; background: #fff6d1; }
+.actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+#audit li { margin-bottom: 8px; }
+#audit small { display: block; color: var(--muted); }
+footer { padding-bottom: 30px; color: var(--muted); }

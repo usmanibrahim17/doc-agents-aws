@@ -109,6 +109,11 @@ variable "api_throttle_burst_limit" {
   default = 20
 }
 
+variable "web_dir" {
+  description = "Folder with the static demo site."
+  type        = string
+}
+
 variable "force_destroy" {
   description = "Allow terraform destroy to delete non-empty buckets (demo only)."
   type        = bool

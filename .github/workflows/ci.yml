@@ -50,3 +50,57 @@ jobs:
         run: ruff format --check .
       - name: pytest
         run: pytest
+
+  # Continuous deployment: only on a push to main, only after both check jobs passed.
+  # GitHub issues a short-lived OIDC token; AWS exchanges it for temporary credentials of the
+  # deploy role, whose trust policy accepts only this repo's main branch. No AWS keys are stored.
+  deploy:
+    needs: [terraform, python]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy # one deploy at a time; never cancel one that is mid-apply
+      cancel-in-progress: false
+    permissions:
+      id-token: write # lets the job request the OIDC token
+      contents: read
+    env:
+      # A secret, so the address is masked in the public logs.
+      TF_VAR_budget_alert_emails: ${{ secrets.BUDGET_ALERT_EMAILS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false # the guard below reads `terraform show -json`
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: build lambda zip
+        run: python scripts/build_zip.py
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          mask-aws-account-id: true
+      - name: terraform init
+        working-directory: infra/envs/demo
+        run: terraform init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+      - name: terraform plan
+        working-directory: infra/envs/demo
+        run: terraform plan -input=false -no-color -out=tfplan
+      # Safety net: automatic deploys may add and change resources, but never delete or replace
+      # them. A deliberate destroy needs "[allow-destroy]" in the commit message.
+      - name: refuse unexpected destroys
+        working-directory: infra/envs/demo
+        env:
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          deletes=$(terraform show -json tfplan | jq '[.resource_changes[]? | select(.change.actions | index("delete"))] | length')
+          echo "resources the plan would delete or replace: $deletes"
+          if [ "$deletes" -gt 0 ] && ! printf '%s' "$COMMIT_MESSAGE" | grep -qF '[allow-destroy]'; then
+            echo "::error::The plan deletes or replaces resources. Review it, then re-run with [allow-destroy] in the commit message."
+            exit 1
+          fi
+      - name: terraform apply
+        working-directory: infra/envs/demo
+        run: terraform apply -input=false -no-color tfplan

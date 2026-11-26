@@ -15,5 +15,5 @@ locals {
   account_id = data.aws_caller_identity.current.account_id
 
   # Browser origins allowed by the API and the uploads bucket.
-  cors_origins = var.cors_allowed_origins
+  cors_origins = concat(["https://${aws_cloudfront_distribution.web.domain_name}"], var.cors_allowed_origins)
 }

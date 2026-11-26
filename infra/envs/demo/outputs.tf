@@ -1,3 +1,7 @@
+output "web_url" {
+  value = module.docagent.web_url
+}
+
 output "api_url" {
   value = module.docagent.api_url
 }
