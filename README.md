@@ -1,6 +1,6 @@
 # doc-agents-aws
 
-**Four AI agents on AWS that read invoices and receipts, check them, fix what can be fixed, and hand the rest to a person with a plain-English explanation. Serverless, deployed with Terraform, measured agent by agent.**
+**Four AI agents on AWS that read invoices and receipts, check them, fix what is safe to fix, and hand the rest to a person with a plain-English explanation. Money is never changed without one. Serverless, deployed with Terraform, measured agent by agent.**
 
 **Live demo: <https://dqzyienf3t29b.cloudfront.net>**: click a fictional sample and watch it move through the agents. Demo only: don't upload real invoices.
 
@@ -10,7 +10,7 @@ Project 2 of my AI portfolio. Project 1: [rag-on-aws](https://github.com/usmanib
 
 | Human review | Audit trail |
 |---|---|
-| ![A document waiting for review, with the explanation and editable fields](docs/img/demo-review.png) | ![Every agent decision for one document](docs/img/demo-audit.png) |
+| ![A wrong total waiting for approval, with the suggested value pre-filled and the reason](docs/img/demo-review.png) | ![Every agent decision for one document](docs/img/demo-audit.png) |
 
 ## What it does
 
@@ -19,7 +19,7 @@ Project 2 of my AI portfolio. Project 1: [rag-on-aws](https://github.com/usmanib
 | **Classifier** | Invoice, receipt, credit note, or not a financial document. Junk is rejected with a reason |
 | **Extractor** | Reads PDF or photo into a fixed JSON schema: vendor, number, date, currency, line items, subtotal, tax, total, expense category |
 | **Validator** | Rules first (arithmetic, tax rate, required fields, duplicates, known vendor), then an AI anomaly check on documents that pass |
-| **Resolver** | Re-reads the problem fields, fuzzy-matches misspelled vendors, recomputes totals. Fixed documents go back to the Validator (at most 2 loops) |
+| **Resolver** | Re-reads the problem fields, fuzzy-matches misspelled vendors, recomputes totals. Non-monetary fixes are applied and go back to the Validator (at most 2 loops); **monetary fixes are suggested for one-click approval** |
 
 Whatever remains goes to a person: the workflow pauses, shows what is wrong and what was already tried, and resumes on approve or reject. Every decision is written to an audit log; saved documents export as CSV.
 
@@ -43,8 +43,8 @@ flowchart TB
     E --> V[Validator]
     V -->|valid| F[finalizer]
     V -->|issues| R[Resolver]
-    R -->|"changed, max 2 loops"| V
-    R -->|"nothing to change"| H["reviewer<br/>waitForTaskToken"]
+    R -->|"non-monetary fix, max 2 loops"| V
+    R -->|"money to approve, or no fix"| H["reviewer<br/>waitForTaskToken"]
     V -->|"still invalid after 2"| H
     H -->|approve / reject| F
   end
@@ -65,7 +65,8 @@ Each box in the workflow is its own Lambda with its own IAM role. Agent Lambdas 
 |---|---|
 | **Rules before AI** in the Validator | Arithmetic, tax and duplicates are exact, free and explainable; the model only judges what rules cannot, and only on documents that passed them |
 | **Step Functions Standard** with `waitForTaskToken` | A document can wait days for a person with nothing running |
-| Resolver **only fixes what evidence supports** | A total is recomputed only when every line is internally consistent; the old value stays in the audit log |
+| **Money needs a person** (default) | A change to a total, subtotal, tax, currency or line amount is only suggested, pre-filled with the reason. `auto_fix_monetary_amounts = true` lets the Resolver apply it instead |
+| Resolver **only proposes what evidence supports** | A total is recomputed only when every line is internally consistent; old and new values stay in the audit log |
 | Loop ends when **nothing changed** (or after 2 loops) | No repeated model calls that cannot help |
 | **SQS + a starter Lambda** in front of the workflow | A burst of uploads waits in line (`ChangeMessageVisibility` backoff) instead of hitting the free-tier limit together |
 | **Pluggable provider** (`gemini` or `bedrock`) | Bedrock on-demand quota is 0 on this account. The Bedrock path is tested with stubs only |
@@ -81,26 +82,31 @@ Each box in the workflow is its own Lambda with its own IAM role. Agent Lambdas 
 | Classifier | Document type accuracy | 100% (33 documents) |
 | Extractor | Field accuracy / line items / category | 100% / 100% / 100% (30 documents) |
 | Validator | Precision / recall | 100% / 100% (14 bad, 16 good) |
-| Resolver | Saved without a human | 42.9% (6 of 14 flagged) |
-| Resolver | Fixable fixed correctly / unfixable sent to a person | 6 of 6 / 8 of 8 |
-| Pipeline | Latency, one document (median of 5, max) | 5.2 s (18.8 s) |
-| Pipeline | Latency when 31 arrive at once (p50 / p95) | 73 s / 228 s, mostly queueing |
+| Resolver | Non-monetary fixes applied correctly (misspelled vendors) | 3 of 3 |
+| Resolver | Wrong totals: right correction suggested for approval | 3 of 3 |
+| Resolver | Unfixable documents sent to a person | 8 of 8 |
+| Resolver | Saved without a person | 21.4% (3 of 14 flagged) |
+| Resolver | Amounts changed without a person | 0 |
+| Pipeline | Latency, one document (median of 5, max) | 5.3 s (6.9 s) |
+| Pipeline | Latency when 31 arrive at once (p50 / p95) | 97 s / 243 s, mostly queueing |
 
-**How to read this.** The 100% scores mean the pipeline handles this set, not that it is error-free. The documents are machine-rendered and clearly printed (scans add only slight rotation, noise and blur), the set is small, and the same author wrote the data, the rules and the pipeline. Expect lower scores on creased photos, handwriting and unusual layouts. The auto-fix rate is low by design: 8 of the 14 faults (duplicates, missing data, odd tax, unknown vendor) *should* reach a person.
+**How to read this.** The 100% scores mean the pipeline handles this set, not that it is error-free. The documents are machine-rendered and clearly printed (scans add only slight rotation, noise and blur), the set is small, and the same author wrote the data, the rules and the pipeline. Expect lower scores on creased photos, handwriting and unusual layouts. Few documents are saved without a person by design: 11 of the 14 faulty ones need one, either to approve a changed amount or to supply what is missing. An earlier run that let the Resolver change totals itself saved 6 of 14; both runs are in the history table.
+
+**Real photos:** [`evals/photos/`](evals/photos/README.md) holds a second set, photographs of ten printed documents scored against the same ground truth and reported as a separate row. The photos have not been added yet, so there is no result.
 
 A [burst test](evals/LOAD_TEST.md) of 20 simultaneous uploads finished all 20 in 366 s with nothing lost or dead-lettered.
 
 ## Cost per 1,000 documents
 
-Measured in the eval run: 1,971 input and 297 output tokens, 8.8 state transitions and 3.63 Lambda GB-seconds per document.
+Measured in the eval run: 1,944 input and 292 output tokens, 8.5 state transitions and 2.83 Lambda GB-seconds per document.
 
 | Option | Models | AWS | **Total per 1,000 documents** |
 |---|---|---|---|
-| Gemini free tier (demo and public data only) | $0.00 | $0.32 | **$0.32** |
-| Gemini paid (`gemini-3.5-flash-lite`) | $1.33 | $0.32 | **$1.65** |
-| Amazon Bedrock Nova Lite (estimate, not run) | $0.19 | $0.32 | **$0.51** |
+| Gemini free tier (demo and public data only) | $0.00 | $0.30 | **$0.30** |
+| Gemini paid (`gemini-3.5-flash-lite`) | $1.31 | $0.30 | **$1.61** |
+| Amazon Bedrock Nova Lite (estimate, not run) | $0.19 | $0.30 | **$0.48** |
 
-AWS share: Step Functions $0.22, Lambda $0.06, DynamoDB $0.02, S3 + SQS $0.01, API Gateway $0.01. List prices without free-tier allowances; DynamoDB, S3, SQS and API request counts per document are assumptions; logs, CloudFront, transfer and storage are excluded. Prices and sources are in [`evals/cost.py`](evals/cost.py). Nothing runs all the time: when idle, the charges are storage and the queue polling.
+AWS share: Step Functions $0.21, Lambda $0.05, DynamoDB $0.02, S3 + SQS $0.01, API Gateway $0.01. List prices without free-tier allowances; DynamoDB, S3, SQS and API request counts per document are assumptions; logs, CloudFront, transfer and storage are excluded. Prices and sources are in [`evals/cost.py`](evals/cost.py). Nothing runs all the time: when idle, the charges are storage and the queue polling.
 
 ## Security
 
@@ -118,7 +124,7 @@ AWS share: Step Functions $0.22, Lambda $0.06, DynamoDB $0.02, S3 + SQS $0.01, A
 ## Problems solved
 
 1. **Paused reviews would have blocked the queue.** An execution waiting for a person still counts as running, so the starter subtracts pending reviews before deciding whether there is a free slot.
-2. **Auto-fixing money is risky.** The Resolver first re-reads the document, and recomputes only when the line items prove which figure is wrong.
+2. **Auto-fixing money is risky.** The first version corrected wrong totals by itself. Now it prepares the correction and a person accepts it with one click, unless the client switches that on.
 3. **Duplicates in a public demo.** The duplicate key includes the session, so two visitors trying the same sample do not flag each other.
 4. **Rate limits without paying to wait.** Instead of sleeping in a Lambda, agents fail fast on 429 and Step Functions backs off.
 5. **A circular dependency** between the site's security policy (needs the API address) and the API's CORS (needs the site address), broken by allowing the API Gateway domain pattern in the policy.

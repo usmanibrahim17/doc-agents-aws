@@ -32,6 +32,8 @@ Four-agent document pipeline on AWS: invoices/receipts (PDF or photo) go in; Cla
 | CD | GitHub Actions: fmt/validate/ruff/pytest, then plan + apply on main via OIDC; guard blocks any destroy/replace unless commit message has `[allow-destroy]` |
 | Isolation | Anonymous session id generated client-side (localStorage), sent as `X-Session-Id` header. Every upload, list, detail, audit, review, approve/reject and export is scoped to that session. Step Functions task tokens stay server-side (`reviews` table), never sent to the browser; approve/reject is by document id after checking the session owns it |
 | Retention | S3 lifecycle deletes uploads after 7 days; DynamoDB TTL expires documents/audit/reviews after 7 days. Site shows a clear "demo only, don't upload real invoices" banner |
+| Resolver policy | Auto-apply only non-monetary fixes (vendor name, non-monetary values found on a second reading). Changes to total, subtotal, tax, currency or line quantities/prices/amounts (including filling empty ones) are suggestions for human one-click approval. Setting `auto_fix_monetary_amounts` (default false) |
+| Eval sets | Generated set (`evals/data`) and real photos of printed documents (`evals/photos`); every run appends a history row to `evals/RESULTS.md` |
 | Eval data | Synthetic documents are generated programmatically from ground-truth JSON (PDFs rendered; scan-like images rendered with slight rotation/noise), so ground truth is exact by construction |
 | Cost | AWS Budget with email alerts (email via secret, never committed) |
 
