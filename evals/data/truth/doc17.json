@@ -1,0 +1,44 @@
+{
+  "document_type": "invoice",
+  "category": "Meals",
+  "fields": {
+    "vendor": "Gloamreach Robotics",
+    "invoice_number": "INV-02712",
+    "date": "2026-10-16",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Filter coffee",
+        "quantity": 1,
+        "unit_price": 3.2,
+        "amount": 3.2
+      },
+      {
+        "description": "Team lunch buffet",
+        "quantity": 1,
+        "unit_price": 18.5,
+        "amount": 18.5
+      },
+      {
+        "description": "Soup of the day",
+        "quantity": 3,
+        "unit_price": 6.8,
+        "amount": 20.4
+      }
+    ],
+    "subtotal": 42.1,
+    "tax": 2.1,
+    "total": 44.2
+  },
+  "faults": [
+    "unknown_vendor"
+  ],
+  "expected_issues": [
+    "unknown_vendor"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc17",
+  "file": "doc17.pdf"
+}

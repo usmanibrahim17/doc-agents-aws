@@ -1,0 +1,34 @@
+{
+  "document_type": "receipt",
+  "category": "Software",
+  "fields": {
+    "vendor": "Fernquist Analytics GmbH",
+    "invoice_number": "R-02726",
+    "date": "2026-10-26",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Extra storage 1 TB",
+        "quantity": 5,
+        "unit_price": 12.0,
+        "amount": 60.0
+      },
+      {
+        "description": "Priority support",
+        "quantity": 2,
+        "unit_price": 150.0,
+        "amount": 300.0
+      }
+    ],
+    "subtotal": 360.0,
+    "tax": 72.0,
+    "total": 432.0
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc19",
+  "file": "doc19.jpg"
+}

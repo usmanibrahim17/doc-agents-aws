@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DocAgents: invoice and receipt processing on AWS</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="banner" role="note">
+    <strong>Demo only. Don't upload real invoices.</strong>
+    Files are sent to Google's Gemini free tier (Google may use them to improve its products) and
+    are deleted after 7 days.
+  </div>
+  <header>
+    <h1>DocAgents</h1>
+    <p>Four agents read invoices and receipts: <b>classify</b> → <b>extract</b> → <b>validate</b> →
+      <b>resolve</b>. What they cannot fix comes to you. Only this browser can see your documents.</p>
+  </header>
+  <main>
+    <section>
+      <h2>1. Add a document</h2>
+      <p>One click on a fictional sample (click one twice to see duplicate detection):</p>
+      <div id="samples" class="buttons"></div>
+      <p><label class="upload">Or upload a made-up PDF, PNG or JPEG (max 5 MB)
+        <input id="file" type="file" accept="application/pdf,image/png,image/jpeg"></label></p>
+      <p id="message" role="status"></p>
+    </section>
+
+    <section id="review-section" hidden>
+      <h2>2. Waiting for your review <span id="review-count" class="count"></span></h2>
+      <div id="reviews"></div>
+    </section>
+
+    <section>
+      <div class="heading">
+        <h2>Results</h2>
+        <button id="export" type="button">Export CSV</button>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>File</th><th>Status</th><th>Type</th><th>Vendor</th><th>Category</th>
+            <th class="num">Total</th><th>Agents that ran</th></tr></thead>
+          <tbody id="results"></tbody>
+        </table>
+      </div>
+      <p id="empty">Nothing yet. Try a sample above.</p>
+    </section>
+
+    <section id="detail" hidden>
+      <div class="heading">
+        <h2 id="detail-title"></h2>
+        <a id="detail-file" target="_blank" rel="noopener noreferrer">Open original document</a>
+      </div>
+      <p id="detail-reason"></p>
+      <div id="detail-fields" class="scroll"></div>
+      <h3>Audit trail</h3>
+      <ol id="audit"></ol>
+    </section>
+  </main>
+  <footer>
+    <a href="https://github.com/usmanibrahim17/doc-agents-aws">Source code</a> ·
+    All sample companies are fictional.
+  </footer>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

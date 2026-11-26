@@ -1,0 +1,40 @@
+{
+  "document_type": "credit_note",
+  "category": "Software",
+  "fields": {
+    "vendor": "Fernquist Analytics GmbH",
+    "invoice_number": "CN-02656",
+    "date": "2026-10-30",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "API usage bundle",
+        "quantity": 3,
+        "unit_price": -80.0,
+        "amount": -240.0
+      },
+      {
+        "description": "Extra storage 1 TB",
+        "quantity": 6,
+        "unit_price": -12.0,
+        "amount": -72.0
+      },
+      {
+        "description": "Team licence, monthly",
+        "quantity": 4,
+        "unit_price": -49.0,
+        "amount": -196.0
+      }
+    ],
+    "subtotal": -508.0,
+    "tax": -101.6,
+    "total": -609.6
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc09",
+  "file": "doc09.pdf"
+}

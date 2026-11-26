@@ -1,3 +1,7 @@
+output "web_url" {
+  value = "https://${aws_cloudfront_distribution.web.domain_name}"
+}
+
 output "api_url" {
   value = aws_apigatewayv2_api.this.api_endpoint
 }

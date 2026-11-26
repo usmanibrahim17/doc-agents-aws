@@ -1,0 +1,38 @@
+{
+  "document_type": "invoice",
+  "category": "Office supplies",
+  "fields": {
+    "vendor": "Cobblewren Office Supply Ltd",
+    "invoice_number": null,
+    "date": "2026-09-21",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Toner",
+        "quantity": 5,
+        "unit_price": 61.0,
+        "amount": 305.0
+      },
+      {
+        "description": "Gel pens, pack of 12",
+        "quantity": 2,
+        "unit_price": 9.8,
+        "amount": 19.6
+      }
+    ],
+    "subtotal": 324.6,
+    "tax": 0.0,
+    "total": 324.6
+  },
+  "faults": [
+    "missing_invoice_number"
+  ],
+  "expected_issues": [
+    "missing_field"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc22",
+  "file": "doc22.jpg"
+}

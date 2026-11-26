@@ -1,0 +1,14 @@
+{
+  "id": "doc_junk1",
+  "file": "doc_junk1.pdf",
+  "document_type": "not_financial",
+  "category": null,
+  "fields": null,
+  "faults": [
+    "not_financial"
+  ],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null
+}

@@ -1,0 +1,40 @@
+{
+  "document_type": "invoice",
+  "category": "Office supplies",
+  "fields": {
+    "vendor": "Cobblewren Office Supply Ltd",
+    "invoice_number": "INV-02677",
+    "date": "2026-09-02",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Gel pens, pack of 12",
+        "quantity": 2,
+        "unit_price": 9.8,
+        "amount": 19.6
+      },
+      {
+        "description": "Desk organiser",
+        "quantity": 4,
+        "unit_price": 14.0,
+        "amount": 56.0
+      }
+    ],
+    "subtotal": 75.6,
+    "tax": 5.67,
+    "total": 93.27
+  },
+  "faults": [
+    "wrong_total"
+  ],
+  "expected_issues": [
+    "total_mismatch"
+  ],
+  "resolvable": true,
+  "resolved_values": {
+    "total": 81.27
+  },
+  "duplicate_of": null,
+  "id": "doc12",
+  "file": "doc12.jpg"
+}

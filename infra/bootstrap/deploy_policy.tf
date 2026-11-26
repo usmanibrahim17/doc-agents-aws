@@ -109,7 +109,11 @@ data "aws_iam_policy_document" "deploy_compute" {
 
   statement {
     sid       = "ListStateMachines"
-    actions   = ["states:ListStateMachines", "states:ListTagsForResource"]
+    actions = [
+      "states:ListStateMachines",
+      "states:ListTagsForResource",
+      "states:ValidateStateMachineDefinition", # called by terraform plan; no resource scope
+    ]
     resources = ["*"]
   }
 

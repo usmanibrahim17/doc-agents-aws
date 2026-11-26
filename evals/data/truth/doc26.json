@@ -1,0 +1,40 @@
+{
+  "document_type": "receipt",
+  "category": "Travel",
+  "fields": {
+    "vendor": "Pebblecrank Travel Co.",
+    "invoice_number": "R-02775",
+    "date": "2026-10-16",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Booking fee",
+        "quantity": 1,
+        "unit_price": 6.5,
+        "amount": 6.5
+      },
+      {
+        "description": "Airport transfer",
+        "quantity": 3,
+        "unit_price": 42.0,
+        "amount": 126.0
+      },
+      {
+        "description": "Rail ticket, return",
+        "quantity": 2,
+        "unit_price": 86.0,
+        "amount": 172.0
+      }
+    ],
+    "subtotal": 304.5,
+    "tax": 30.45,
+    "total": 334.95
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc26",
+  "file": "doc26.pdf"
+}

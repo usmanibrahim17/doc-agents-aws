@@ -1,0 +1,44 @@
+{
+  "document_type": "invoice",
+  "category": "Other",
+  "fields": {
+    "vendor": "Oddmoor Freight Ltd",
+    "invoice_number": "INV-02789",
+    "date": "2026-09-22",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Customs handling",
+        "quantity": 3,
+        "unit_price": 35.0,
+        "amount": 105.0
+      },
+      {
+        "description": "Pallet delivery",
+        "quantity": 1,
+        "unit_price": 74.0,
+        "amount": 74.0
+      },
+      {
+        "description": "Packing materials",
+        "quantity": 4,
+        "unit_price": 22.0,
+        "amount": 88.0
+      }
+    ],
+    "subtotal": 267.0,
+    "tax": 101.46,
+    "total": 368.46
+  },
+  "faults": [
+    "odd_tax_rate"
+  ],
+  "expected_issues": [
+    "tax_rate"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc28",
+  "file": "doc28.pdf"
+}

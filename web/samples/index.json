@@ -1,0 +1,30 @@
+[
+  {
+    "file": "clean-invoice.pdf",
+    "label": "A clean invoice"
+  },
+  {
+    "file": "scanned-receipt.jpg",
+    "label": "A scanned receipt"
+  },
+  {
+    "file": "wrong-total.jpg",
+    "label": "Wrong total (auto-fixed)"
+  },
+  {
+    "file": "misspelled-vendor.pdf",
+    "label": "Misspelled vendor (auto-fixed)"
+  },
+  {
+    "file": "missing-number.pdf",
+    "label": "Missing number (needs you)"
+  },
+  {
+    "file": "odd-tax.pdf",
+    "label": "Odd tax rate (needs you)"
+  },
+  {
+    "file": "not-financial.pdf",
+    "label": "Not a financial document"
+  }
+]

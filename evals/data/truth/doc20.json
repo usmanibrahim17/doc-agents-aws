@@ -1,0 +1,46 @@
+{
+  "document_type": "receipt",
+  "category": "Meals",
+  "fields": {
+    "vendor": "Saltbrook Catering Co.",
+    "invoice_number": "R-02733",
+    "date": "2026-10-22",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Team lunch buffet",
+        "quantity": 6,
+        "unit_price": 18.5,
+        "amount": 111.0
+      },
+      {
+        "description": "Soup of the day",
+        "quantity": 1,
+        "unit_price": 6.8,
+        "amount": 6.8
+      },
+      {
+        "description": "Sandwich platter",
+        "quantity": 5,
+        "unit_price": 28.0,
+        "amount": 140.0
+      }
+    ],
+    "subtotal": 257.8,
+    "tax": 19.34,
+    "total": 377.14
+  },
+  "faults": [
+    "wrong_total"
+  ],
+  "expected_issues": [
+    "total_mismatch"
+  ],
+  "resolvable": true,
+  "resolved_values": {
+    "total": 277.14
+  },
+  "duplicate_of": null,
+  "id": "doc20",
+  "file": "doc20.jpg"
+}
