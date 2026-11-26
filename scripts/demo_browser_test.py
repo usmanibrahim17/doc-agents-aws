@@ -51,7 +51,10 @@ def main() -> int:
             lambda m: problems.append(f"console: {m.text}") if m.type == "error" else None,
         )
         page.on("pageerror", lambda e: problems.append(f"page error: {e}"))
-        page.on("requestfailed", lambda r: problems.append(f"request failed: {r.url.split('?')[0]}"))
+        page.on(
+            "requestfailed",
+            lambda r: problems.append(f"request failed: {r.url.split('?')[0]}"),
+        )
 
         print("page")
         response = page.goto(args.url)
