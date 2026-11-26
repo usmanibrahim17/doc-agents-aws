@@ -2,6 +2,8 @@
 
 Project 2 of the AI portfolio. Project 1 is `../rag-on-aws` (https://github.com/usmanibrahim17/rag-on-aws): reuse its patterns and code (providers, SQS backoff, Terraform layout, bootstrap/OIDC/boundary, CI deploy guard, evals runner, cost script, browser test).
 
+STATUS: M1-M8 complete. Live: https://dqzyienf3t29b.cloudfront.net (CD from main). Evals: `evals/RESULTS.md`.
+
 Four-agent document pipeline on AWS: invoices/receipts (PDF or photo) go in; Classifier -> Extractor -> Validator -> Resolver (loop, max 2) -> save, or human review. Orchestrated by Step Functions, one Lambda per agent.
 
 ## Working rules
