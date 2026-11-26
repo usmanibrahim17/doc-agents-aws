@@ -1,0 +1,40 @@
+{
+  "document_type": "credit_note",
+  "category": "Professional services",
+  "fields": {
+    "vendor": "Marrowgate Consulting LLP",
+    "invoice_number": "CN-02768",
+    "date": "2026-09-01",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Consulting hours",
+        "quantity": 1,
+        "unit_price": -135.0,
+        "amount": -135.0
+      },
+      {
+        "description": "Report preparation",
+        "quantity": 2,
+        "unit_price": -420.0,
+        "amount": -840.0
+      },
+      {
+        "description": "Workshop facilitation",
+        "quantity": 2,
+        "unit_price": -900.0,
+        "amount": -1800.0
+      }
+    ],
+    "subtotal": -2775.0,
+    "tax": -277.5,
+    "total": -3052.5
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc25",
+  "file": "doc25.pdf"
+}

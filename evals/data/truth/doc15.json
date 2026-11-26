@@ -1,0 +1,38 @@
+{
+  "document_type": "receipt",
+  "category": "Professional services",
+  "fields": {
+    "vendor": "Marrowgate Consulting LLP",
+    "invoice_number": "R-02698",
+    "date": null,
+    "currency": "EUR",
+    "line_items": [
+      {
+        "description": "Contract review",
+        "quantity": 2,
+        "unit_price": 275.0,
+        "amount": 550.0
+      },
+      {
+        "description": "Report preparation",
+        "quantity": 5,
+        "unit_price": 420.0,
+        "amount": 2100.0
+      }
+    ],
+    "subtotal": 2650.0,
+    "tax": 132.5,
+    "total": 2782.5
+  },
+  "faults": [
+    "missing_date"
+  ],
+  "expected_issues": [
+    "missing_field"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc15",
+  "file": "doc15.jpg"
+}

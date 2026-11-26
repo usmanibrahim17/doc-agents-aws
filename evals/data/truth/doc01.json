@@ -1,0 +1,46 @@
+{
+  "document_type": "invoice",
+  "category": "Office supplies",
+  "fields": {
+    "vendor": "Quillfather Paper Co.",
+    "invoice_number": "INV-02600",
+    "date": "2026-10-14",
+    "currency": "USD",
+    "line_items": [
+      {
+        "description": "Lever arch files",
+        "quantity": 5,
+        "unit_price": 3.4,
+        "amount": 17.0
+      },
+      {
+        "description": "Desk organiser",
+        "quantity": 6,
+        "unit_price": 14.0,
+        "amount": 84.0
+      },
+      {
+        "description": "Toner",
+        "quantity": 1,
+        "unit_price": 61.0,
+        "amount": 61.0
+      }
+    ],
+    "subtotal": 162.0,
+    "tax": 12.15,
+    "total": 174.15
+  },
+  "faults": [
+    "misspelled_vendor"
+  ],
+  "expected_issues": [
+    "unknown_vendor"
+  ],
+  "resolvable": true,
+  "resolved_values": {
+    "vendor": "Quillfeather Paper Co."
+  },
+  "duplicate_of": null,
+  "id": "doc01",
+  "file": "doc01.pdf"
+}

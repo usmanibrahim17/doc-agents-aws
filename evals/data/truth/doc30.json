@@ -1,0 +1,44 @@
+{
+  "document_type": "invoice",
+  "category": "Office supplies",
+  "fields": {
+    "vendor": "Cobblewren Office Supply Ltd",
+    "invoice_number": "INV-02607",
+    "date": "2026-11-13",
+    "currency": "EUR",
+    "line_items": [
+      {
+        "description": "Lever arch files",
+        "quantity": 6,
+        "unit_price": 3.4,
+        "amount": 20.4
+      },
+      {
+        "description": "Desk organiser",
+        "quantity": 6,
+        "unit_price": 14.0,
+        "amount": 84.0
+      },
+      {
+        "description": "A4 copier paper, box",
+        "quantity": 6,
+        "unit_price": 24.5,
+        "amount": 147.0
+      }
+    ],
+    "subtotal": 251.4,
+    "tax": 50.28,
+    "total": 301.68
+  },
+  "faults": [
+    "duplicate"
+  ],
+  "expected_issues": [
+    "duplicate"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": "doc02",
+  "id": "doc30",
+  "file": "doc30.pdf"
+}

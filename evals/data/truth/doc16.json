@@ -1,0 +1,46 @@
+{
+  "document_type": "invoice",
+  "category": "Travel",
+  "fields": {
+    "vendor": "Pebblecrank Travel Co.",
+    "invoice_number": "INV-02705",
+    "date": "2026-09-20",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Hotel night",
+        "quantity": 5,
+        "unit_price": 129.0,
+        "amount": 645.0
+      },
+      {
+        "description": "Rail ticket, return",
+        "quantity": 4,
+        "unit_price": 86.0,
+        "amount": 344.0
+      },
+      {
+        "description": "Booking fee",
+        "quantity": 4,
+        "unit_price": 6.5,
+        "amount": 26.0
+      }
+    ],
+    "subtotal": 1015.0,
+    "tax": 0.0,
+    "total": 1005.5
+  },
+  "faults": [
+    "wrong_total"
+  ],
+  "expected_issues": [
+    "total_mismatch"
+  ],
+  "resolvable": true,
+  "resolved_values": {
+    "total": 1015.0
+  },
+  "duplicate_of": null,
+  "id": "doc16",
+  "file": "doc16.pdf"
+}

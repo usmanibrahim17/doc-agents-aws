@@ -1,0 +1,38 @@
+{
+  "document_type": "invoice",
+  "category": "Meals",
+  "fields": {
+    "vendor": "Tinlark Cafe",
+    "invoice_number": "INV-02782",
+    "date": "2026-09-28",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Filter coffee",
+        "quantity": 5,
+        "unit_price": 3.2,
+        "amount": 16.0
+      },
+      {
+        "description": "Sandwich platter",
+        "quantity": 5,
+        "unit_price": 28.0,
+        "amount": 140.0
+      }
+    ],
+    "subtotal": 156.0,
+    "tax": 70.2,
+    "total": 226.2
+  },
+  "faults": [
+    "odd_tax_rate"
+  ],
+  "expected_issues": [
+    "tax_rate"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc27",
+  "file": "doc27.pdf"
+}

@@ -1,0 +1,40 @@
+{
+  "document_type": "receipt",
+  "category": "Meals",
+  "fields": {
+    "vendor": "Tinlark Cafe",
+    "invoice_number": "R-02642",
+    "date": "2026-11-04",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Team lunch buffet",
+        "quantity": 3,
+        "unit_price": 18.5,
+        "amount": 55.5
+      },
+      {
+        "description": "Sparkling water",
+        "quantity": 5,
+        "unit_price": 2.5,
+        "amount": 12.5
+      },
+      {
+        "description": "Sandwich platter",
+        "quantity": 6,
+        "unit_price": 28.0,
+        "amount": 168.0
+      }
+    ],
+    "subtotal": 236.0,
+    "tax": 23.6,
+    "total": 259.6
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc07",
+  "file": "doc07.pdf"
+}

@@ -1,0 +1,40 @@
+{
+  "document_type": "invoice",
+  "category": "Other",
+  "fields": {
+    "vendor": "Oddmoor Freight Ltd",
+    "invoice_number": "INV-02719",
+    "date": "2026-10-30",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Packing materials",
+        "quantity": 3,
+        "unit_price": 22.0,
+        "amount": 66.0
+      },
+      {
+        "description": "Customs handling",
+        "quantity": 1,
+        "unit_price": 35.0,
+        "amount": 35.0
+      },
+      {
+        "description": "Pallet delivery",
+        "quantity": 4,
+        "unit_price": 74.0,
+        "amount": 296.0
+      }
+    ],
+    "subtotal": 397.0,
+    "tax": 0.0,
+    "total": 397.0
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc18",
+  "file": "doc18.jpg"
+}

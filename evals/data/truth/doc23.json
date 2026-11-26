@@ -1,0 +1,40 @@
+{
+  "document_type": "credit_note",
+  "category": "Software",
+  "fields": {
+    "vendor": "Nimbus Hollow Software Inc.",
+    "invoice_number": "CN-02754",
+    "date": "2026-09-24",
+    "currency": "EUR",
+    "line_items": [
+      {
+        "description": "Priority support",
+        "quantity": 1,
+        "unit_price": -150.0,
+        "amount": -150.0
+      },
+      {
+        "description": "Extra storage 1 TB",
+        "quantity": 4,
+        "unit_price": -12.0,
+        "amount": -48.0
+      },
+      {
+        "description": "API usage bundle",
+        "quantity": 3,
+        "unit_price": -80.0,
+        "amount": -240.0
+      }
+    ],
+    "subtotal": -438.0,
+    "tax": -21.9,
+    "total": -459.9
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc23",
+  "file": "doc23.pdf"
+}

@@ -1,0 +1,40 @@
+{
+  "document_type": "invoice",
+  "category": "Utilities",
+  "fields": {
+    "vendor": "Brasswick Power and Water",
+    "invoice_number": "INV-02621",
+    "date": "2026-11-05",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Meter service",
+        "quantity": 4,
+        "unit_price": 12.5,
+        "amount": 50.0
+      },
+      {
+        "description": "Water supply charge",
+        "quantity": 5,
+        "unit_price": 48.75,
+        "amount": 243.75
+      },
+      {
+        "description": "Standing charge",
+        "quantity": 4,
+        "unit_price": 19.9,
+        "amount": 79.6
+      }
+    ],
+    "subtotal": 373.35,
+    "tax": 0.0,
+    "total": 373.35
+  },
+  "faults": [],
+  "expected_issues": [],
+  "resolvable": null,
+  "resolved_values": {},
+  "duplicate_of": null,
+  "id": "doc04",
+  "file": "doc04.jpg"
+}

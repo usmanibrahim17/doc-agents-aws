@@ -1,0 +1,44 @@
+{
+  "document_type": "invoice",
+  "category": "Office supplies",
+  "fields": {
+    "vendor": "Quillfeather Paper Co.",
+    "invoice_number": "INV-02670",
+    "date": "2026-10-05",
+    "currency": "EUR",
+    "line_items": [
+      {
+        "description": "Desk organiser",
+        "quantity": 6,
+        "unit_price": 14.0,
+        "amount": 84.0
+      },
+      {
+        "description": "Gel pens, pack of 12",
+        "quantity": 4,
+        "unit_price": 9.8,
+        "amount": 39.2
+      },
+      {
+        "description": "Toner",
+        "quantity": 1,
+        "unit_price": 61.0,
+        "amount": 61.0
+      }
+    ],
+    "subtotal": 184.2,
+    "tax": 36.84,
+    "total": 221.04
+  },
+  "faults": [
+    "duplicate"
+  ],
+  "expected_issues": [
+    "duplicate"
+  ],
+  "resolvable": false,
+  "resolved_values": {},
+  "duplicate_of": "doc11",
+  "id": "doc29",
+  "file": "doc29.jpg"
+}

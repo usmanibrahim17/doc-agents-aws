@@ -1,0 +1,46 @@
+{
+  "document_type": "receipt",
+  "category": "Other",
+  "fields": {
+    "vendor": "Oddoor Freight Ltd",
+    "invoice_number": "R-02649",
+    "date": "2026-09-20",
+    "currency": "GBP",
+    "line_items": [
+      {
+        "description": "Packing materials",
+        "quantity": 3,
+        "unit_price": 22.0,
+        "amount": 66.0
+      },
+      {
+        "description": "Pallet delivery",
+        "quantity": 1,
+        "unit_price": 74.0,
+        "amount": 74.0
+      },
+      {
+        "description": "Customs handling",
+        "quantity": 1,
+        "unit_price": 35.0,
+        "amount": 35.0
+      }
+    ],
+    "subtotal": 175.0,
+    "tax": 17.5,
+    "total": 192.5
+  },
+  "faults": [
+    "misspelled_vendor"
+  ],
+  "expected_issues": [
+    "unknown_vendor"
+  ],
+  "resolvable": true,
+  "resolved_values": {
+    "vendor": "Oddmoor Freight Ltd"
+  },
+  "duplicate_of": null,
+  "id": "doc08",
+  "file": "doc08.pdf"
+}
