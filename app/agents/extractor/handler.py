@@ -33,7 +33,7 @@ def process(event: dict, runtime: Runtime, provider) -> dict:
         event,
         "extractor",
         "extracted fields",
-        updates={"fields": fields, "category": category},
+        updates={"fields": fields, "first_fields": fields, "category": category},
         result=result,
         category=category,
         line_items=len(fields["line_items"]),

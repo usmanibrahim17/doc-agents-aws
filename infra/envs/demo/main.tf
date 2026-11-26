@@ -39,6 +39,9 @@ module "docagent" {
   # One setting switches provider (Bedrock quota is 0 on this account).
   ai_provider = "gemini"
 
+  # Local development of the site; the CloudFront origin is added by the module.
+  cors_allowed_origins = ["http://localhost:8080"]
+
   monthly_budget_usd  = var.monthly_budget_usd
   budget_alert_emails = var.budget_alert_emails
   vendors_file        = "${path.root}/../../../data/vendors.json"

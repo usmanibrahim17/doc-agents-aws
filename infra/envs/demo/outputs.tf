@@ -1,3 +1,7 @@
+output "api_url" {
+  value = module.docagent.api_url
+}
+
 output "state_machine_arn" {
   value = module.docagent.state_machine_arn
 }

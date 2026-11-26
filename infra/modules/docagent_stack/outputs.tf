@@ -1,3 +1,7 @@
+output "api_url" {
+  value = aws_apigatewayv2_api.this.api_endpoint
+}
+
 output "state_machine_arn" {
   value = aws_sfn_state_machine.workflow.arn
 }

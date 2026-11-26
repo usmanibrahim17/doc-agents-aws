@@ -28,17 +28,23 @@ data "aws_iam_policy_document" "stack_boundary" {
     resources = [local.table_arn, "${local.table_arn}/index/*"]
   }
 
-  # Start executions, report human-review decisions, and read execution state.
+  # Start executions and read execution state.
   statement {
     sid = "Workflow"
     actions = [
       "states:StartExecution",
       "states:DescribeExecution",
       "states:ListExecutions",
-      "states:SendTaskSuccess",
-      "states:SendTaskFailure",
     ]
     resources = [local.state_machine_arn, local.execution_arn]
+  }
+
+  # Report human-review decisions. These actions have no resource-level permissions; the task
+  # token itself is what authorizes resuming one particular task.
+  statement {
+    sid       = "TaskCallbacks"
+    actions   = ["states:SendTaskSuccess", "states:SendTaskFailure"]
+    resources = ["*"]
   }
 
   # Step Functions role invokes the agent Lambdas.

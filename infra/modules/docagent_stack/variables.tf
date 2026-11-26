@@ -75,6 +75,40 @@ variable "generation_model_id" {
   default     = ""
 }
 
+variable "cors_allowed_origins" {
+  description = "Extra browser origins allowed to call the API and upload (e.g. local testing)."
+  type        = list(string)
+  default     = []
+}
+
+variable "max_active_documents" {
+  description = "Documents processed at once; the rest wait on the queue."
+  type        = number
+  default     = 3
+}
+
+variable "daily_upload_limit" {
+  description = "Uploads accepted per day across all visitors (protects the free tier)."
+  type        = number
+  default     = 300
+}
+
+variable "session_daily_upload_limit" {
+  description = "Uploads accepted per day per browser session."
+  type        = number
+  default     = 60
+}
+
+variable "api_throttle_rate_limit" {
+  type    = number
+  default = 5
+}
+
+variable "api_throttle_burst_limit" {
+  type    = number
+  default = 20
+}
+
 variable "force_destroy" {
   description = "Allow terraform destroy to delete non-empty buckets (demo only)."
   type        = bool

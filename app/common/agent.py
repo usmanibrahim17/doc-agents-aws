@@ -1,5 +1,6 @@
 """What every agent Lambda needs: the uploaded file, and one call to record what it decided."""
 
+from datetime import UTC, datetime
 from functools import lru_cache
 
 from app.common import store
@@ -84,7 +85,8 @@ class Runtime:
         names, values = {}, {":agent": [agent], ":none": []}
         sets = ["#agents = list_append(if_not_exists(#agents, :none), :agent)"]
         names["#agents"] = "agents_run"
-        for index, (key, value) in enumerate((updates or {}).items()):
+        updates = (updates or {}) | {"updated_at": datetime.now(UTC).isoformat()}
+        for index, (key, value) in enumerate(updates.items()):
             names[f"#f{index}"] = key
             values[f":v{index}"] = store.to_dynamo(value)
             sets.append(f"#f{index} = :v{index}")
