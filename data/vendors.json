@@ -1,0 +1,12 @@
+[
+  { "key": "quillfeather paper", "name": "Quillfeather Paper Co.", "category": "Office supplies" },
+  { "key": "cobblewren office supply", "name": "Cobblewren Office Supply Ltd", "category": "Office supplies" },
+  { "key": "nimbus hollow software", "name": "Nimbus Hollow Software Inc.", "category": "Software" },
+  { "key": "brasswick power and water", "name": "Brasswick Power and Water", "category": "Utilities" },
+  { "key": "marrowgate consulting", "name": "Marrowgate Consulting LLP", "category": "Professional services" },
+  { "key": "pebblecrank travel", "name": "Pebblecrank Travel Co.", "category": "Travel" },
+  { "key": "tinlark cafe", "name": "Tinlark Cafe", "category": "Meals" },
+  { "key": "oddmoor freight", "name": "Oddmoor Freight Ltd", "category": "Other" },
+  { "key": "fernquist analytics", "name": "Fernquist Analytics GmbH", "category": "Software" },
+  { "key": "saltbrook catering", "name": "Saltbrook Catering Co.", "category": "Meals" }
+]

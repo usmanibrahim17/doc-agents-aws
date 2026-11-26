@@ -1,0 +1,2 @@
+# Copy to backend.hcl (git-ignored), then:  terraform init -backend-config=backend.hcl
+bucket = "rag-demo-tfstate-<account-id>"
