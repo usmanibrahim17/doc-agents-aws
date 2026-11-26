@@ -220,6 +220,8 @@ Prices and what is excluded: `evals/cost.py`.
 - Two duplicates are uploaded after their originals have finished.
 - The set is small and was written by the same author as the pipeline: read it as a regression
   check, not an independent benchmark.
+- The documents are machine-rendered with clear print; the scans add only slight rotation, noise
+  and blur. Real photos (creases, shadows, handwriting, unusual layouts) will score lower.
 """
 
 
